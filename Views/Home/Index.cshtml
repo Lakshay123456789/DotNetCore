@@ -1,0 +1,144 @@
+﻿@inject IHttpContextAccessor HttpContextAccessor
+@model IEnumerable<TestCore.Models.Movie>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Movies</h1>
+
+
+@if (!string.IsNullOrEmpty(HttpContextAccessor.HttpContext?.Session.Get("Token")?.ToString()))
+{
+    if (HttpContextAccessor.HttpContext.Session.GetString("UserRole") == "Admin")
+    {
+        <p>
+            <a asp-controller="Home" asp-action="AddMovie">Add Movie</a>
+        </p>
+    }
+}
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Id)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MovieName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MovieDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MovieGenre)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MovieCast)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.MovieName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.MovieDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.MovieGenre)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.MovieCast)
+            </td>
+            <td>
+                    @if (!string.IsNullOrEmpty(HttpContextAccessor.HttpContext?.Session.Get("Token")?.ToString()))
+                    {
+                        <a class="btn text-dark btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#exampleModal4" onclick="BookMovie(@item.Id)">Book Movie</a>
+                    }
+                </td>
+        </tr>
+}
+    </tbody>
+</table>
+
+<div class="modal fade" id="exampleModal4" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="movieName" class="col-form-label">Movie Name:</label>
+                    <input type="text" class="form-control" id="movieName" readonly>
+
+                    <label for="movieDate" class="col-form-label">Movie Date:</label>
+                    <input type="datetime" class="form-control" id="movieDate" readonly>
+
+                    <label for="movieGenre" class="col-form-label">Movie Genre.:</label>
+                    <input type="text" class="form-control" id="movieGenre" readonly> 
+
+                    <label for="movieCast" class="col-form-label">Movie Cast.:</label>
+                    <input type="text" class="form-control" id="movieCast" readonly>
+
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="bookMovie">Book Movie</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts{
+    <script>
+        function BookMovie(id){
+            console.log(id);
+            var data = new Object();
+            data.id = id;
+            $.ajax({
+                type: 'GET',
+                url: `https://localhost:7130/api/CRUD/GetById/${id}`,
+                data : data,
+                success : function (result){
+                    console.log('Success',result);
+                    $('#movieName').val(result.movieName)
+                    $('#movieDate').val(result.movieDate)
+                    $('#movieGenre').val(result.movieGenre)
+                    $('#movieCast').val(result.movieCast)
+
+                    $('#exampleModal4').modal('show');
+                },
+                error: function(){}
+            });
+            $('#bookMovie').click(()=>{
+                var movie = new Object();
+                movie = { "MovieName": $('#movieName').val(), "MovieDate": $('#movieDate').val(), "MovieGenre": $('#movieGenre').val(), "MovieCast": $('#movieCast').val() }
+                console.log(movie);
+                if(localStorage.getItem('BookedMovie') == null){
+                    localStorage.setItem('BookedMovie', JSON.stringify(movie));
+                    alert("Movie Booked Successfully");
+                    $('.modal').modal('hide');
+                    $('.modal-backdrop').remove();
+                    location.reload();
+                }
+                else{
+                    alert("You have already booked a Movie")
+                    $('.modal').modal('hide');
+                    $('.modal-backdrop').remove();
+                    location.reload();
+                }
+            })
+        }
+    </script>
+}
